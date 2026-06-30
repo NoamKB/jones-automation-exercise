@@ -1,0 +1,13 @@
+# Dependencies (regenerated with `npm install`)
+node_modules/
+
+# Playwright output (regenerated each run)
+test-results/
+playwright-report/
+playwright/.cache/
+
+# OS noise
+.DS_Store
+
+# The assignment brief itself (Jones's document, not part of the solution)
+Jones Automation  Exercise.pdf

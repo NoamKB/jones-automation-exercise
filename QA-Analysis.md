@@ -1,51 +1,125 @@
 # QA Analysis — Billing Form Mock-up
 
-My review of the "Account Information" payment screen.
+A review of the "Account Information" billing/payment screen, based on the static mock-up.
+Because this is a static image, I've separated what can be seen directly in the UI from
+the validation behavior that would have to be checked in the real implementation.
 
-## Problems found
+## Problems found in the mock-up
 
-**Security**
+| # | Issue | Severity |
+|---|-------|----------|
+| 1 | Payment handling risk (see below) | High |
+| 2 | No CVV / security code field | High |
+| 3 | Currency not shown on the amount | Medium |
+| 4 | No Country field for a global billing address | Medium |
+| 5 | Billing street address fields are ambiguous | Low |
+| 6 | Formatting rules pushed onto the user | Low |
+| 7 | Continue / Cancel sit close together | Low |
+| 8 | Inline error behavior is unclear | Low |
 
-The biggest issue is that card details are typed straight into ordinary form fields, with nothing suggesting a tokenization provider behind them (no Stripe Elements, Braintree, or similar). If the raw card number reaches the company's own servers, the whole system falls into a much heavier PCI-DSS compliance scope, and any breach exposes real card data. This is the most serious thing on the screen.
+**1. Security / payment handling.** The card fields look like ordinary first-party inputs.
+The mock-up does not show whether card data is handled through hosted, tokenized fields. If
+raw card data reaches the company's own servers, this creates serious PCI-DSS scope and
+breach-risk concerns. I can't tell from the image whether that's the case, but the absence
+of any visible hosted-field indication is worth raising as the most important question.
+On top of that, the screen shows no security or trust messaging at all — well-designed
+billing forms usually reassure the user at this step (for example, "card details are sent
+securely over SSL and are not stored on our servers"). That absence is visible in the
+mock-up, and it both undermines user confidence and leaves the data-handling story unstated.
 
-There's also no CVV / security code field anywhere. Most gateways require the CVV for online (card-not-present) payments, so either these transactions will fail or the integration is doing something non-standard. Either way it points to an incomplete form.
+**2. Missing CVV.** The card section shows card number, expiry month/year, and cardholder
+name, but no CVV / security code field. A CVV is typically required for card-not-present
+payments, so it should either be added or its absence explained.
 
-I'd also want to confirm the page is served over HTTPS and shows some trust signal. A payment screen with no secure-context cue both worries users and, if it really isn't HTTPS, is a genuine vulnerability.
+**3. Currency ambiguity.** The Payment Amount shows "30.00" with no currency. For a global
+SaaS company this is unclear — the user should see something like "$30.00" or "USD 30.00".
 
-**Usability**
+**4. Global billing address.** There's a "State or Province" field but no Country field.
+Since the company is described as global, the address should support non-US customers, and
+the state/province options should adapt to the selected country.
 
-A few of the field labels push work onto the user that the system should handle. "Card Number (No dashes or spaces)" and "Postal Code (no dashes)" are good examples — the form should accept whatever the user types and strip the formatting itself, rather than rejecting valid input and causing failed checkouts.
+**5. Ambiguous street address fields.** The billing address has two fields — the first
+required, the second optional — but it isn't clear what each is for. If they're meant as
+address lines, labelling them "Address Line 1 *" and "Address Line 2 (apartment, suite,
+unit, building — optional)" would remove the ambiguity. If they mean street name and
+number, that should be explicit too.
 
-The address section looks US-only: there's a "State or Province" dropdown but no Country field, even though the company is described as global. A customer outside the US can't really enter a valid billing address here, which blocks international billing for a product that's meant to serve a worldwide market.
+**6. Formatting pushed onto the user.** Labels like "Card Number (No dashes or spaces)" and
+"Postal Code (no dashes)" make the user format the data manually. It's friendlier to accept
+common formatting, strip spaces/dashes automatically, and validate the normalized value.
 
-The Payment Amount ("30.00") has no currency next to it. For a global company that's ambiguous — is it dollars, euros, something else? The user should know exactly what they'll be charged.
+**7. Continue / Cancel proximity.** The primary action and the cancel action sit close
+together. This is a usability risk rather than a severe defect — in a payment flow it can
+increase accidental clicks. More spacing and a clearer primary/secondary hierarchy would
+help, and if Cancel discards entered data it should confirm before doing so.
 
-Smaller things: nothing in the mock shows inline validation or error messages, so a user won't know why a submission was rejected; and the middle-initial box and the split month/year expiry selects add friction for little benefit.
+**8. Inline validation visibility.** Required markers (`*`) are shown, but from a static
+image it isn't clear how errors are surfaced. The real form should show clear inline errors
+next to the relevant field.
 
-**Functional**
+## Suggestions for improvement
 
-The expiry is two separate dropdowns with nothing stopping you from picking a date that's already passed — that should be caught on the form, not later at the gateway. Similarly, there's no sign of basic card-number validation (length / Luhn check) to catch obvious typos before submitting.
+These aren't defects — the form isn't broken without them — but they would make the screen
+clearer and more trustworthy.
 
-**Accessibility / performance**
+- **Offer more payment options.** Adding PayPal, Apple Pay and Google Pay alongside the
+  card form gives users a faster, familiar path and can improve conversion. (These wallets
+  also keep card data off our side entirely.)
+- **Add a short trust/security note** near the card fields, like the SSL/"we don't store
+  your card details" reassurance many billing forms show. It's a small line that addresses
+  the user's main worry at exactly the right moment.
+- **Group the form into clear sections.** Right now the fields read as one long list.
+  Splitting it into "Card Details" and "Billing Address" with headings (the way a
+  well-organized billing form does) makes it much easier to scan.
+- **Combine the expiry into one field.** A single "MM / YY" input is quicker than two
+  separate Month and Year dropdowns and avoids the awkward dropdown hunting.
 
-Hard to judge fully from a static image, but worth checking that every field has a real label, the tab order is sensible, focus states are visible, and errors are announced to screen readers. Performance isn't observable here, but a payment step in particular should load quickly and not block on heavy scripts.
+For reference, I compared this against a billing form I find well-organized: it separates
+Card Details from Billing Address, uses a single MM/YY expiry, includes CVV and a Country
+field, shows a formatting hint in the card placeholder, and carries the SSL trust note
+above. It isn't perfect (it pre-fills test data and uses a single free-text address box),
+but those are the specific patterns worth borrowing here.
+
+## Functional validation to verify
+
+Because this is a static mock-up, the actual validation behavior isn't visible. In the real
+implementation I would verify that:
+
+- Card number validation handles invalid length, non-numeric input, and numbers that fail
+  the Luhn check.
+- Invalid card numbers are rejected with a clear inline error before any payment attempt.
+- Expiry date validation prevents or rejects expired month/year combinations.
+- Required fields cannot be submitted empty.
+- Postal code validation matches the selected country rather than assuming one format.
+- Unsafe text input (e.g. script tags in name/address fields) is escaped and never executed.
 
 ## Sample test cases
 
 | ID | Title | Type | Steps | Expected result |
 |----|-------|------|-------|-----------------|
-| TC-01 | Valid payment goes through | Positive | Select VISA, enter a valid test card number, a future expiry and CVV, fill the cardholder name and a complete billing address, click Continue. | Form is accepted and moves to the next step. The amount and currency are shown clearly, and no card data is exposed in the page or logs. |
-| TC-02 | Missing required field is blocked | Negative | Leave Card Number empty, fill everything else validly, click Continue. | Submission is blocked with a clear error on the Card Number field. No payment is attempted. |
-| TC-03 | Bad / malicious input is rejected | Negative | Enter a card number with letters (or one that fails the Luhn check), and type `<script>alert(1)</script>` into the first-name field, then click Continue. | The card number is rejected with a clear message. The script text is treated as plain text and never runs, and is escaped anywhere it's later displayed. |
+| TC-01 | Valid payment details | Positive | Fill all required fields with valid data — including CVV, a valid future expiry, a complete billing address and a selected country — then click Continue. | User can continue; the amount and currency are shown clearly; no raw card data appears in logs or app requests. |
+| TC-02 | Missing required card number | Negative | Leave Card Number empty, fill everything else validly, click Continue. | Submission is blocked, an inline error appears next to Card Number, and no payment is attempted. |
+| TC-03 | Invalid card / unsafe input | Negative | Enter a card number with an invalid length or a failed Luhn check, and a script-like string in a name or address field, then click Continue. | The card is rejected with a clear inline error; the text input is treated as plain text and never executed. |
 
-A boundary case worth adding: selecting an expiry month/year in the past should be rejected on the form straight away, not at the gateway.
+A separate boundary test should verify that a past expiry date is rejected.
 
 ## Product solution for the most severe issue
 
-The most severe issue is the raw card data being collected in first-party fields. The fix is to stop handling card data directly and move to a PCI-compliant hosted-fields / tokenization integration (Stripe Elements, Braintree Hosted Fields, or similar).
+The most severe issue is the payment handling: the form gives no visible indication that
+hosted/tokenized card fields are used. If raw card data reaches company servers, that
+creates serious compliance and breach risk.
 
-With that approach, the card number, expiry and CVV are entered inside fields hosted by the payment provider (embedded as secure iframes), so the raw card number never touches the company's servers — the provider hands back a token that's used to charge the card. That alone shrinks PCI-DSS scope dramatically (typically from the heavy SAQ-D down to the much lighter SAQ-A), cutting both compliance cost and breach risk. As a bonus, these libraries also handle the formatting and validation gaps above: they normalize input automatically, detect the card type, and run real-time Luhn and expiry checks.
+Recommended solution: move card entry to a PCI-compliant hosted-fields / tokenization
+provider (Stripe Elements, Braintree Hosted Fields, Adyen Components, or similar). The raw
+card number and CVV are entered inside the provider's secure fields/iframes, and Jones
+receives only a token / payment-method ID, not the raw card number. This can significantly
+reduce PCI-DSS scope depending on the final integration, while also reducing breach risk.
 
-I'd pair that with the related fixes that block correct billing: add the missing CVV field, add a Country field with a state/province list that adapts to the country, and show the currency next to the amount with clear inline validation.
+Pair it with the related fixes that the mock-up points to:
 
-The payoff is lower security and compliance risk first, then fewer failed checkouts and the ability to actually bill the global customer base the product is meant to serve.
+- Add a CVV / security code field.
+- Add a Country field with country-aware state and postal-code behavior.
+- Show the currency next to the amount.
+- Clarify the address labels.
+- Normalize spaces/dashes in the card number and postal code.
+- Improve the spacing and hierarchy of the Continue / Cancel buttons.

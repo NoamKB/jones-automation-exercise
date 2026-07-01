@@ -11,7 +11,7 @@ the validation behavior that would have to be checked in the real implementation
 | 1 | Payment handling risk (see below) | High |
 | 2 | No CVV / security code field | High |
 | 3 | Currency not shown on the amount | Medium |
-| 4 | No Country field for a global billing address | Medium |
+| 4 | Global billing support is incomplete | Medium |
 | 5 | Billing street address fields are ambiguous | Low |
 | 6 | Formatting rules pushed onto the user | Low |
 | 7 | Continue / Cancel sit close together | Low |
@@ -21,21 +21,26 @@ hosted/tokenized payment fields are used. If raw card data reaches the company's
 that creates serious compliance and breach-risk concerns. I'm not saying the form is
 insecure — I can't tell that from a static image — but the absence of any visible
 hosted-field indication is worth raising as the most important question.
-On top of that, the screen shows no security or trust messaging at all — well-designed
-billing forms usually reassure the user at this step (for example, "card details are sent
-securely over SSL and are not stored on our servers"). That absence is visible in the
-mock-up, and it both undermines user confidence and leaves the data-handling story unstated.
+Hosted fields also reduce the chance of raw card data being exposed through browser
+autocomplete, local caching, or accidental application logging. On top of that, the screen
+shows no security or trust messaging at all — well-designed billing forms usually reassure
+the user at this step (for example, "card details are sent securely over SSL and are not
+stored on our servers"). That absence is visible in the mock-up, and it both undermines
+user confidence and leaves the data-handling story unstated.
 
 **2. Missing CVV.** The card section shows card number, expiry month/year, and cardholder
 name, but no CVV / security code field. A CVV is typically required for card-not-present
-payments, so it should either be added or its absence explained.
+payments, so it should either be added or its absence explained. If added, the CVV should
+be used only during authorization and never stored after the transaction.
 
 **3. Currency ambiguity.** The Payment Amount shows "30.00" with no currency. For a global
 SaaS company this is unclear — the user should see something like "$30.00" or "USD 30.00".
 
-**4. Global billing address.** There's a "State or Province" field but no Country field.
+**4. Global billing assumptions.** There's a "State or Province" field but no Country field.
 Since the company is described as global, the address should support non-US customers, and
-the state/province options should adapt to the selected country.
+the state/province options should adapt to the selected country. The separate "MI" field
+also feels US-centric and may not fit global naming conventions; if it isn't required for
+billing, it should probably be removed or made clearly optional.
 
 **5. Ambiguous street address fields.** The billing address has two fields — the first
 required, the second optional — but it isn't clear what each is for. If they're meant as
@@ -63,8 +68,9 @@ clearer and more trustworthy.
 - **Add a short trust/security note** near the card fields, like the SSL/"we don't store
   your card details" reassurance many billing forms show. It's a small line that addresses
   the user's main worry at exactly the right moment.
-- **Group the form into clear sections.** Right now the fields read as one long list.
-  Splitting it into "Card Details" and "Billing Address" with headings makes it much
+- **Group the form into clear sections.** Right now the fields read as one long list, and
+  the two-column layout places some fields next to each other without a clear relationship.
+  Splitting it into "Card Details" and "Billing Address" with headings would make the form
   easier to scan.
 - **Combine the expiry into one field.** A single "MM / YY" input is quicker than two
   separate Month and Year dropdowns and avoids the awkward dropdown hunting.
@@ -82,6 +88,11 @@ implementation I would verify that:
   relevant field when left empty or filled with invalid data.
 - Postal code validation matches the selected country rather than assuming one format.
 - Unsafe text input (e.g. script tags in name/address fields) is escaped and never executed.
+- Dropdown placeholders such as "Select a state" are rejected as invalid values when the
+  field is required.
+- Cancel behavior is clear: whether Cancel clears the form, returns to the previous page, or
+  exits the payment flow. It should not submit or trigger a payment, and if it discards
+  entered data the user should get a confirmation.
 
 ## Sample test cases
 
@@ -104,6 +115,8 @@ provider (Stripe Elements, Braintree Hosted Fields, Adyen Components, or similar
 card number and CVV are entered inside the provider's secure fields/iframes, and Jones
 receives only a token / payment-method ID, not the raw card number. This can significantly
 reduce PCI-DSS scope depending on the final integration, while also reducing breach risk.
+The goal is not to make Jones better at handling raw card data, but to avoid handling raw
+card data at all.
 
 Pair it with the related fixes that the mock-up points to:
 

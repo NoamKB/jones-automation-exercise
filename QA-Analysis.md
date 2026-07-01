@@ -1,4 +1,4 @@
-# QA Analysis — Billing Form Mock-up
+# QA Analysis: Billing Form Mock-up
 
 A review of the "Account Information" billing/payment screen, based on the static mock-up.
 Because this is a static image, I've separated what can be seen directly in the UI from
@@ -19,11 +19,11 @@ the validation behavior that would have to be checked in the real implementation
 **1. Security / payment handling.** The mock-up gives no visible indication that
 hosted/tokenized payment fields are used. If raw card data reaches the company's servers,
 that creates serious compliance and breach-risk concerns. I'm not saying the form is
-insecure — I can't tell that from a static image — but the absence of any visible
+insecure (I can't tell that from a static image), but the absence of any visible
 hosted-field indication is worth raising as the most important question.
 Hosted fields also reduce the chance of raw card data being exposed through browser
 autocomplete, local caching, or accidental application logging. On top of that, the screen
-shows no security or trust messaging at all — well-designed billing forms usually reassure
+shows no security or trust messaging at all, and well-designed billing forms usually reassure
 the user at this step (for example, "card details are sent securely over SSL and are not
 stored on our servers"). That absence is visible in the mock-up, and it both undermines
 user confidence and leaves the data-handling story unstated.
@@ -34,7 +34,7 @@ payments, so it should either be added or its absence explained. If added, the C
 be used only during authorization and never stored after the transaction.
 
 **3. Currency ambiguity.** The Payment Amount shows "30.00" with no currency. For a global
-SaaS company this is unclear — the user should see something like "$30.00" or "USD 30.00".
+SaaS company this is unclear, and the user should see something like "$30.00" or "USD 30.00".
 
 **4. Global billing assumptions.** There's a "State or Province" field but no Country field.
 Since the company is described as global, the address should support non-US customers, and
@@ -42,10 +42,10 @@ the state/province options should adapt to the selected country. The separate "M
 also feels US-centric and may not fit global naming conventions; if it isn't required for
 billing, it should probably be removed or made clearly optional.
 
-**5. Ambiguous street address fields.** The billing address has two fields — the first
-required, the second optional — but it isn't clear what each is for. If they're meant as
+**5. Ambiguous street address fields.** The billing address has two fields, the first
+required and the second optional, but it isn't clear what each is for. If they're meant as
 address lines, labelling them "Address Line 1 *" and "Address Line 2 (apartment, suite,
-unit, building — optional)" would remove the ambiguity. If they mean street name and
+unit, building, optional)" would remove the ambiguity. If they mean street name and
 number, that should be explicit too.
 
 **6. Formatting pushed onto the user.** Labels like "Card Number (No dashes or spaces)" and
@@ -53,13 +53,13 @@ number, that should be explicit too.
 common formatting, strip spaces/dashes automatically, and validate the normalized value.
 
 **7. Continue / Cancel proximity.** The primary action and the cancel action sit close
-together. This is a usability risk rather than a severe defect — in a payment flow it can
+together. This is a usability risk rather than a severe defect, and in a payment flow it can
 increase accidental clicks. More spacing and a clearer primary/secondary hierarchy would
 help, and if Cancel discards entered data it should confirm before doing so.
 
 ## Suggestions for improvement
 
-These aren't defects — the form isn't broken without them — but they would make the screen
+These aren't defects (the form isn't broken without them), but they would make the screen
 clearer and more trustworthy.
 
 - **Offer more payment options.** Adding PayPal, Apple Pay and Google Pay alongside the
@@ -98,7 +98,7 @@ implementation I would verify that:
 
 | ID | Title | Type | Steps | Expected result |
 |----|-------|------|-------|-----------------|
-| TC-01 | Valid payment details | Positive | Fill all required fields with valid data — including CVV, a valid future expiry, a complete billing address and a selected country — then click Continue. | User can continue; the amount and currency are shown clearly; no raw card data appears in logs or app requests. |
+| TC-01 | Valid payment details | Positive | Fill all required fields with valid data (including CVV, a valid future expiry, a complete billing address and a selected country), then click Continue. | User can continue; the amount and currency are shown clearly; no raw card data appears in logs or app requests. |
 | TC-02 | Missing required card number | Negative | Leave Card Number empty, fill everything else validly, click Continue. | Submission is blocked, an inline error appears next to Card Number, and no payment is attempted. |
 | TC-03 | Invalid card / unsafe input | Negative | Enter a card number with an invalid length or a failed Luhn check, and a script-like string in a name or address field, then click Continue. | The card is rejected with a clear inline error; the text input is treated as plain text and never executed. |
 

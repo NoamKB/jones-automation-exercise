@@ -1,4 +1,4 @@
-# Jones — Automation Exercise
+# Jones Automation Exercise
 Playwright automation for the Automation Engineer exercise. It fills in the
 contact form on <https://test.netlify.app/>, submits a call-back request, and checks
 that the thank-you page is reached.
@@ -7,7 +7,7 @@ that the thank-you page is reached.
 
 [`tests/request-callback.spec.js`](tests/request-callback.spec.js) contains two tests:
 
-**1. Happy path** — submitting the form successfully:
+**1. Happy path** (submitting the form successfully):
 
 1. Opens <https://test.netlify.app/>
 2. Fills in Name, Email, Phone, Company and Website
@@ -17,7 +17,7 @@ that the thank-you page is reached.
 6. Asserts the thank-you page was reached (URL + the visible "Thank You" heading)
 7. Logs a message once on the thank-you page
 
-**2. Negative case** — leaving a required field (Name) empty and clicking submit, then
+**2. Negative case:** leaving a required field (Name) empty and clicking submit, then
 asserting the form does *not* submit: it stays on the landing page and the empty field
 reports as invalid. This checks the form rejects bad input, not just that the happy path
 works.
@@ -66,7 +66,7 @@ A few choices I made along the way, and why:
   prefix, so a field can't accidentally match a longer label that starts the same way.
 
 - **How I verify "reached the thank-you page."** While inspecting the site I saw the form is
-  plain HTML (`<form action="thank-you.html">`) that submits via GET — so the values come
+  plain HTML (`<form action="thank-you.html">`) that submits via GET, so the values come
   back on the URL as a query string and the browser navigates to `/thank-you.html`. I assert
   on both the resulting URL and the visible "Thank You" heading, so a change to either one
   still fails the test loudly.

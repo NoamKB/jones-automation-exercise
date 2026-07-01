@@ -37,7 +37,7 @@ test('submits a call-back request and lands on the thank-you page', async ({ pag
   await expect(page).toHaveURL(/thank-you\.html/);
   await expect(page.getByRole('heading', { name: /thank you/i })).toBeVisible();
 
-  console.log('Reached the thank-you page — call-back request submitted.');
+  console.log('Reached the thank-you page: call-back request submitted.');
 });
 
 test('does not submit when a required field is empty', async ({ page }) => {

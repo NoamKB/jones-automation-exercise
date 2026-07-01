@@ -21,10 +21,10 @@ test('submits a call-back request and lands on the thank-you page', async ({ pag
   await page.getByLabel(/^Website\s*\*?$/).fill(testLead.website);
 
   const employees = page.getByLabel('Number of Employees');
-  if ((await employees.count()) > 0) {
-    await employees.selectOption({ label: '51-500' });
-    await expect(employees).toHaveValue('51-500');
-  }
+
+  await expect(employees).toBeVisible();
+  await employees.selectOption({ label: '51-500' });
+  await expect(employees).toHaveValue('51-500');
 
   await page.screenshot({ path: 'screenshots/before-submit.png', fullPage: true });
 

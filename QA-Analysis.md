@@ -15,13 +15,12 @@ the validation behavior that would have to be checked in the real implementation
 | 5 | Billing street address fields are ambiguous | Low |
 | 6 | Formatting rules pushed onto the user | Low |
 | 7 | Continue / Cancel sit close together | Low |
-| 8 | Inline error behavior is unclear | Low |
 
-**1. Security / payment handling.** The card fields look like ordinary first-party inputs.
-The mock-up does not show whether card data is handled through hosted, tokenized fields. If
-raw card data reaches the company's own servers, this creates serious PCI-DSS scope and
-breach-risk concerns. I can't tell from the image whether that's the case, but the absence
-of any visible hosted-field indication is worth raising as the most important question.
+**1. Security / payment handling.** The mock-up gives no visible indication that
+hosted/tokenized payment fields are used. If raw card data reaches the company's servers,
+that creates serious compliance and breach-risk concerns. I'm not saying the form is
+insecure — I can't tell that from a static image — but the absence of any visible
+hosted-field indication is worth raising as the most important question.
 On top of that, the screen shows no security or trust messaging at all — well-designed
 billing forms usually reassure the user at this step (for example, "card details are sent
 securely over SSL and are not stored on our servers"). That absence is visible in the
@@ -53,10 +52,6 @@ together. This is a usability risk rather than a severe defect — in a payment 
 increase accidental clicks. More spacing and a clearer primary/secondary hierarchy would
 help, and if Cancel discards entered data it should confirm before doing so.
 
-**8. Inline validation visibility.** Required markers (`*`) are shown, but from a static
-image it isn't clear how errors are surfaced. The real form should show clear inline errors
-next to the relevant field.
-
 ## Suggestions for improvement
 
 These aren't defects — the form isn't broken without them — but they would make the screen
@@ -69,16 +64,10 @@ clearer and more trustworthy.
   your card details" reassurance many billing forms show. It's a small line that addresses
   the user's main worry at exactly the right moment.
 - **Group the form into clear sections.** Right now the fields read as one long list.
-  Splitting it into "Card Details" and "Billing Address" with headings (the way a
-  well-organized billing form does) makes it much easier to scan.
+  Splitting it into "Card Details" and "Billing Address" with headings makes it much
+  easier to scan.
 - **Combine the expiry into one field.** A single "MM / YY" input is quicker than two
   separate Month and Year dropdowns and avoids the awkward dropdown hunting.
-
-For reference, I compared this against a billing form I find well-organized: it separates
-Card Details from Billing Address, uses a single MM/YY expiry, includes CVV and a Country
-field, shows a formatting hint in the card placeholder, and carries the SSL trust note
-above. It isn't perfect (it pre-fills test data and uses a single free-text address box),
-but those are the specific patterns worth borrowing here.
 
 ## Functional validation to verify
 
@@ -89,7 +78,8 @@ implementation I would verify that:
   the Luhn check.
 - Invalid card numbers are rejected with a clear inline error before any payment attempt.
 - Expiry date validation prevents or rejects expired month/year combinations.
-- Required fields cannot be submitted empty.
+- Required fields can't be submitted empty, and show clear inline errors next to the
+  relevant field when left empty or filled with invalid data.
 - Postal code validation matches the selected country rather than assuming one format.
 - Unsafe text input (e.g. script tags in name/address fields) is escaped and never executed.
 
@@ -105,9 +95,9 @@ A separate boundary test should verify that a past expiry date is rejected.
 
 ## Product solution for the most severe issue
 
-The most severe issue is the payment handling: the form gives no visible indication that
-hosted/tokenized card fields are used. If raw card data reaches company servers, that
-creates serious compliance and breach risk.
+The most severe issue is the payment handling: the mock-up gives no visible indication
+that hosted/tokenized payment fields are used. If raw card data reaches the company's
+servers, that creates serious compliance and breach-risk concerns.
 
 Recommended solution: move card entry to a PCI-compliant hosted-fields / tokenization
 provider (Stripe Elements, Braintree Hosted Fields, Adyen Components, or similar). The raw

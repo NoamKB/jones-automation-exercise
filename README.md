@@ -1,12 +1,13 @@
 # Jones — Automation Exercise
-
-Playwright automation for the Junior Automation Engineer exercise. It fills in the
+Playwright automation for the Automation Engineer exercise. It fills in the
 contact form on <https://test.netlify.app/>, submits a call-back request, and checks
 that the thank-you page is reached.
 
 ## What it does
 
-The test in [`tests/request-callback.spec.js`](tests/request-callback.spec.js):
+[`tests/request-callback.spec.js`](tests/request-callback.spec.js) contains two tests:
+
+**1. Happy path** — submitting the form successfully:
 
 1. Opens <https://test.netlify.app/>
 2. Fills in Name, Email, Phone, Company and Website
@@ -16,6 +17,11 @@ The test in [`tests/request-callback.spec.js`](tests/request-callback.spec.js):
 6. Asserts the thank-you page was reached (URL + the visible "Thank You" heading)
 7. Logs a message once on the thank-you page
 
+**2. Negative case** — leaving a required field (Name) empty and clicking submit, then
+asserting the form does *not* submit: it stays on the landing page and the empty field
+reports as invalid. This checks the form rejects bad input, not just that the happy path
+works.
+
 ## Running it
 
 Needs [Node.js](https://nodejs.org/) (tested on Node 18).
@@ -23,8 +29,21 @@ Needs [Node.js](https://nodejs.org/) (tested on Node 18).
 ```bash
 npm install                      # install dependencies
 npx playwright install chromium  # download the browser Playwright drives
-npm test                         # run the test
+npm test                         # run both tests
 ```
+
+`npm test` runs the whole file (both tests). To run just one, use `-g`, which filters by
+test title:
+
+```bash
+# only the happy path
+npx playwright test -g "lands on the thank-you page"
+
+# only the negative case (required field empty)
+npx playwright test -g "does not submit when a required field"
+```
+
+Other useful commands:
 
 ```bash
 npm run report                   # open the HTML report after a run
@@ -51,6 +70,12 @@ A few choices I made along the way, and why:
   back on the URL as a query string and the browser navigates to `/thank-you.html`. I assert
   on both the resulting URL and the visible "Thank You" heading, so a change to either one
   still fails the test loudly.
+
+- **Added a negative test on top of the happy path.** The brief only asks for the happy
+  path, but a form is only really "working" if it also *rejects* bad input. I checked the
+  page and saw Name/Email/Phone use the HTML `required` attribute, so I added a test that
+  submits with Name empty and asserts the browser blocks it (no navigation, and the field
+  reports invalid via `checkValidity()`).
 
 - **Kept it deliberately small.** One spec, no page objects, no CI. For a single short flow
   that extra structure would add noise without value; I'd reach for it on a larger suite.

@@ -39,3 +39,21 @@ test('submits a call-back request and lands on the thank-you page', async ({ pag
 
   console.log('Reached the thank-you page — call-back request submitted.');
 });
+
+test('does not submit when a required field is empty', async ({ page }) => {
+  await page.goto('/');
+
+  // fill everything except Name, which is a required field
+  await page.getByLabel(/^Email\s*\*?$/).fill(testLead.email);
+  await page.getByLabel(/^Phone\s*\*?$/).fill(testLead.phone);
+
+  await page.getByRole('button', { name: 'Request a call back' }).click();
+
+  // the browser's native required-field check should block the submit, so we
+  // stay on the landing page instead of navigating to the thank-you page
+  await expect(page).not.toHaveURL(/thank-you\.html/);
+
+  const name = page.getByLabel(/^Name\s*\*?$/);
+  const isValid = await name.evaluate((el) => /** @type {HTMLInputElement} */ (el).checkValidity());
+  expect(isValid).toBe(false);
+});
